@@ -18,4 +18,11 @@ class DetailViewController: UIViewController {
         textView.text = note.text
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        note.text = textView.text
+        
+        if let vc = parent as? ViewController {
+            vc.saveData()
+        }
+    }
 }

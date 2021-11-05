@@ -7,7 +7,8 @@
 
 import Foundation
 
-class Note: Codable {
+class Note: Codable, Identifiable, Equatable {
+    var id = UUID()
     var text = ""
     var date = Date()
     var title: String {
@@ -17,15 +18,33 @@ class Note: Codable {
             return text
         }
     }
+    
+    static func == (lhs: Note, rhs: Note) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
-class NoteValue: Codable {
-    var notes = [Note]()
+class NoteVault: Codable {
+    var notes: [Note]
     
     static let dataFileName = "notes.json"
     
     init(notes: [Note]) {
         self.notes = notes
+    }
+    
+    init() {
+        notes = []
+    }
+    
+    func append(_ note: Note) {
+        notes.append(note)
+    }
+    
+    func remove(_ note: Note) {
+        if let rmIndex = notes.firstIndex(where: { $0 == note }) {
+            notes.remove(at: rmIndex)
+        }
     }
     
     func loadData() {
@@ -41,6 +60,9 @@ class NoteValue: Codable {
     
     func saveData() {
         let saveURL = getDocumentsDirectory().appendingPathComponent(Self.dataFileName)
+        
+        // remove notes with empty text
+        notes = notes.filter { !$0.text.isEmpty }
         
         do {
             let encoded = try JSONEncoder().encode(notes)

@@ -8,14 +8,26 @@
 import UIKit
 
 class ViewController: UITableViewController {
-    var notes = [Note]()
+    let noteVault = NoteVault()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(newNote))
+        noteVault.loadData()
         
-        loadData()
+        addToolbarButtons()
+    }
+    
+    func addToolbarButtons() {
+        let newNoteBtn = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(newNote))
+        let spacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        
+        let notesCount = noteVault.notes.count
+        let counterLabel = UILabel()
+        counterLabel.text = "\(notesCount) \(notesCount > 1 ? "notes" : "note")"
+        let notesCounterBtn = UIBarButtonItem(customView: counterLabel)
+        
+        toolbarItems = [spacer, notesCounterBtn, spacer, newNoteBtn]
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -24,12 +36,12 @@ class ViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        notes.count
+        noteVault.notes.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NoteRow", for: indexPath)
-        let note = notes[indexPath.row]
+        let note = noteVault.notes[indexPath.row]
         cell.textLabel?.text = note.title
         cell.detailTextLabel?.text = note.date.formatted()
         return cell
@@ -41,16 +53,18 @@ class ViewController: UITableViewController {
             guard let destVC = segue.destination as? DetailViewController else { return }
             
             if let indexOfCell = tableView.indexPath(for: tableCell) {
-                destVC.note = notes[indexOfCell.row]
+                destVC.note = noteVault.notes[indexOfCell.row]
+                destVC.noteVault = noteVault
             }
         }
     }
     
     @objc func newNote() {
         let note = Note()
-        notes.append(note)
+        noteVault.append(note)
         guard let editView = storyboard?.instantiateViewController(withIdentifier: "EditNote") as? DetailViewController else { return }
         editView.note = note
+        editView.noteVault = noteVault
         navigationController?.pushViewController(editView, animated: true)
     }
 }
